@@ -4,9 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบจัดการสถานะรถ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    label, input, select, button {
+      display: block;
+      margin-bottom: 10px;
+    }
+    .warning {
+      color: red;
+    }
+    a {
+      text-decoration: none;
+      color: blue;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <h1>จัดการสถานะรถ</h1>
+  <h1>จัดการสถานะรถ (ฝั่งพนักงาน)</h1>
   <form id="updateStatusForm">
     <label for="plateNumber">หมายเลขทะเบียนรถ:</label>
     <input type="text" id="plateNumber" required>
@@ -27,6 +45,67 @@
   <p id="resultMessage" class="warning"></p>
 
   <!-- ลิงก์ไปหน้าลูกค้า -->
-  <a href="customer.html" target="_blank" style="display: block; margin-top: 20px; text-decoration: none; color: blue;">ดูสถานะของลูกค้า</a>
+  <a href="customer.html" target="_blank">ดูสถานะของลูกค้า</a>
+
+  <script>
+    const carStatuses = []; // เก็บข้อมูลสถานะรถ
+
+    document.getElementById('updateStatusForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // ป้องกันการโหลดหน้าเมื่อกด Enter
+    });
+
+    function updateStatus() {
+      const plateNumber = document.getElementById('plateNumber').value.trim();
+      const status = document.getElementById('status').value;
+
+      if (!plateNumber) {
+        document.getElementById('resultMessage').innerText = 'กรุณากรอกหมายเลขทะเบียนรถ';
+        return;
+      }
+
+      const existingCarIndex = carStatuses.findIndex(car => car.plateNumber === plateNumber);
+
+      if (existingCarIndex !== -1) {
+        carStatuses[existingCarIndex].status = status;
+        document.getElementById('resultMessage').innerText = `อัปเดตสถานะของรถทะเบียน ${plateNumber} เป็น "${status}" แล้ว`;
+      } else {
+        if (carStatuses.length < 10) {
+          carStatuses.push({ plateNumber, status });
+          document.getElementById('resultMessage').innerText = `เพิ่มรถทะเบียน ${plateNumber} และตั้งสถานะเป็น "${status}" แล้ว`;
+        } else {
+          document.getElementById('resultMessage').innerText = 'ไม่สามารถเพิ่มได้ เกินจำนวนที่กำหนด (สูงสุด 10 ทะเบียนรถ)';
+        }
+      }
+
+      localStorage.setItem('carStatuses', JSON.stringify(carStatuses)); // บันทึกข้อมูลใน Local Storage
+      renderCarList();
+      document.getElementById('updateStatusForm').reset();
+    }
+
+    function deleteCar(index) {
+      const removedCar = carStatuses.splice(index, 1);
+      document.getElementById('resultMessage').innerText = `ลบทะเบียนรถ ${removedCar[0].plateNumber} ออกจากระบบแล้ว`;
+      localStorage.setItem('carStatuses', JSON.stringify(carStatuses)); // อัปเดต Local Storage
+      renderCarList();
+    }
+
+    function renderCarList() {
+      const carList = document.getElementById('carList');
+      carList.innerHTML = '';
+      carStatuses.forEach((car, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${car.plateNumber} - สถานะ: ${car.status} 
+          <button onclick="deleteCar(${index})">ลบ</button>`;
+        carList.appendChild(li);
+      });
+    }
+
+    // โหลดข้อมูลจาก Local Storage เมื่อเปิดหน้าเว็บ
+    window.onload = function() {
+      const storedStatuses = JSON.parse(localStorage.getItem('carStatuses')) || [];
+      carStatuses.push(...storedStatuses);
+      renderCarList();
+    };
+  </script>
 </body>
 </html>
