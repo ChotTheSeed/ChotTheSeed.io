@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการสถานะรถ (จำกัด 10 ทะเบียน)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    label, input, select, button {
+      display: block;
+      margin-bottom: 10px;
+    }
+    .warning {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>จัดการสถานะรถ (สูงสุด 10 ทะเบียน)</h1>
+  <form id="updateStatusForm">
+    <label for="plateNumber">หมายเลขทะเบียนรถ:</label>
+    <input type="text" id="plateNumber" required>
+    
+    <label for="status">สถานะ:</label>
+    <select id="status">
+      <option value="กำลังล้าง">กำลังล้าง</option>
+      <option value="กำลังเช็ดแห้ง">กำลังเช็ดแห้ง</option>
+      <option value="ล้างเสร็จแล้ว">ล้างเสร็จแล้ว</option>
+    </select>
+
+    <button type="button" onclick="updateStatus()">อัปเดตสถานะ</button>
+  </form>
+
+  <h2>รายการทะเบียนรถ</h2>
+  <ul id="carList"></ul>
+  
+  <p id="resultMessage" class="warning"></p>
+
+  <script>
+    const carStatuses = []; // เก็บข้อมูลรถ (สูงสุด 10 คัน)
+
+    // ป้องกันการ reload เมื่อกด Enter
+    document.getElementById('updateStatusForm').addEventListener('submit', function(event) {
+      event.preventDefault(); // ป้องกันพฤติกรรมเริ่มต้นของฟอร์ม
+    });
+
+    function updateStatus() {
+      const plateNumber = document.getElementById('plateNumber').value.trim();
+      const status = document.getElementById('status').value;
+
+      if (!plateNumber) {
+        document.getElementById('resultMessage').innerText = 'กรุณากรอกหมายเลขทะเบียนรถ';
+        return;
+      }
+
+      // ตรวจสอบว่าทะเบียนรถนี้มีอยู่แล้วหรือไม่
+      const existingCarIndex = carStatuses.findIndex(car => car.plateNumber === plateNumber);
+
+      if (existingCarIndex !== -1) {
+        // หากมีอยู่แล้ว ให้อัปเดตสถานะ
+        carStatuses[existingCarIndex].status = status;
+        document.getElementById('resultMessage').innerText = `อัปเดตสถานะของรถทะเบียน ${plateNumber} เป็น "${status}" แล้ว`;
+      } else {
+        // หากยังไม่มี ให้เพิ่มเข้าไปในรายการ
+        if (carStatuses.length < 10) {
+          carStatuses.push({ plateNumber, status });
+          document.getElementById('resultMessage').innerText = `เพิ่มรถทะเบียน ${plateNumber} และตั้งสถานะเป็น "${status}" แล้ว`;
+        } else {
+          // หากมีครบ 10 คันแล้ว
+          document.getElementById('resultMessage').innerText = 'ไม่สามารถเพิ่มได้ เกินจำนวนที่กำหนด (สูงสุด 10 ทะเบียนรถ)';
+        }
+      }
+
+      renderCarList(); // อัปเดตรายการในหน้าจอ
+      document.getElementById('updateStatusForm').reset();
+    }
+
+    function deleteCar(index) {
+      const removedCar = carStatuses.splice(index, 1); // ลบทะเบียนรถจากรายการ
+      document.getElementById('resultMessage').innerText = `ลบทะเบียนรถ ${removedCar[0].plateNumber} ออกจากระบบแล้ว`;
+      renderCarList(); // อัปเดตรายการในหน้าจอ
+    }
+
+    function renderCarList() {
+      const carList = document.getElementById('carList');
+      carList.innerHTML = ''; // ล้างรายการเดิมก่อนแสดงรายการใหม่
+
+      carStatuses.forEach((car, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${car.plateNumber} - สถานะ: ${car.status} 
+          <button onclick="deleteCar(${index})">ลบ</button>`;
+        carList.appendChild(li);
+      });
+    }
+
+    // แชร์สถานะทั้งหมดกับฝั่งลูกค้า
+    window.getCarStatuses = () => carStatuses;
+  </script>
+</body>
+</html>
