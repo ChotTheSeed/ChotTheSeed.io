@@ -9,37 +9,47 @@
       font-family: Arial, sans-serif;
       margin: 20px;
     }
-    label, input, button {
-      display: block;
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
       margin-bottom: 10px;
+    }
+    a {
+      text-decoration: none;
+      color: blue;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>ตรวจสอบสถานะรถ</h1>
-  <form id="checkStatusForm">
-    <label for="plateNumber">หมายเลขทะเบียนรถ:</label>
-    <input type="text" id="plateNumber" required>
+  <h1>สถานะรถของคุณ (ฝั่งลูกค้า)</h1>
+  <ul id="carList"></ul>
 
-    <button type="button" onclick="checkStatus()">ตรวจสอบสถานะ</button>
-  </form>
-
-  <p id="statusMessage" style="color: blue;"></p>
+  <!-- ลิงก์กลับไปหน้าพนักงาน -->
+  <a href="employee.html" target="_blank">กลับไปที่หน้าพนักงาน</a>
 
   <script>
-    function checkStatus() {
-      const plateNumber = document.getElementById('plateNumber').value.trim();
-      const currentCar = window.getCurrentCarStatus(); // ดึงข้อมูลรถปัจจุบัน
+    function loadCarStatuses() {
+      const carStatuses = JSON.parse(localStorage.getItem('carStatuses')) || [];
+      const carList = document.getElementById('carList');
+      carList.innerHTML = '';
 
-      if (currentCar && plateNumber === currentCar.plateNumber) {
-        document.getElementById('statusMessage').innerText = 
-          `สถานะของรถทะเบียน ${plateNumber}: "${currentCar.status}"`;
-      } else {
-        document.getElementById('statusMessage').innerText = 
-          `ไม่พบข้อมูลสถานะของรถทะเบียน ${plateNumber}`;
+      if (carStatuses.length === 0) {
+        carList.innerHTML = '<li>ไม่มีข้อมูลสถานะรถในระบบ</li>';
+        return;
       }
+
+      carStatuses.forEach(car => {
+        const li = document.createElement('li');
+        li.innerText = `${car.plateNumber} - สถานะ: ${car.status}`;
+        carList.appendChild(li);
+      });
     }
+
+    // โหลดข้อมูลสถานะเมื่อเปิดหน้าเว็บ
+    window.onload = loadCarStatuses;
   </script>
-  <a href="employee.html" target="_blank">กลับไปที่หน้าพนักงาน</a>
 </body>
 </html>
